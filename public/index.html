@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Watch Live</title>
+<style>
+  :root { --bg:#0b0b0f; --bar:#15151c; --fg:#e8e8ee; --accent:#3b82f6; }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  html, body { height:100%; background:var(--bg); color:var(--fg); font-family:system-ui, sans-serif; }
+  body { display:flex; flex-direction:column; }
+  header {
+    display:flex; align-items:center; gap:10px; padding:8px 12px;
+    background:var(--bar); border-bottom:1px solid #222; flex-wrap:wrap;
+  }
+  header strong { margin-right:auto; font-size:15px; }
+  input, select, button {
+    background:#1f1f29; color:var(--fg); border:1px solid #333; border-radius:6px;
+    padding:6px 10px; font-size:14px;
+  }
+  input { width:160px; }
+  button { cursor:pointer; }
+  button:hover { border-color:var(--accent); }
+  main { flex:1; position:relative; background:#000; }
+  iframe { position:absolute; inset:0; width:100%; height:100%; border:0; }
+  body.hide-bar header { display:none; }
+  #toggle { position:fixed; top:6px; right:6px; z-index:9; opacity:.35; display:none; }
+  #toggle:hover { opacity:1; }
+  body.hide-bar #toggle { display:block; }
+</style>
+</head>
+<body>
+<header>
+  <strong>Watch Live</strong>
+  <select id="preset">
+    <option value="sportv">SporTV</option>
+    <option value="sportv2">SporTV 2</option>
+    <option value="sportv3" selected>SporTV 3</option>
+    <option value="globo-sp">Globo SP</option>
+    <option value="espn">ESPN</option>
+    <option value="premiere">Premiere</option>
+    <option value="">Outro...</option>
+  </select>
+  <input id="canal" placeholder="nome do canal" value="sportv3">
+  <button id="go">Abrir</button>
+  <button id="reload">Recarregar</button>
+  <button id="fs">Tela cheia</button>
+  <button id="hide">Esconder barra</button>
+</header>
+<main>
+  <iframe id="player"
+    src="https://embedcanaisdetv.xyz/e/index.php?canal=sportv3"
+    allow="autoplay; fullscreen; encrypted-media"
+    allowfullscreen
+    referrerpolicy="no-referrer"></iframe>
+</main>
+<button id="toggle" title="Mostrar barra">☰</button>
+
+<script>
+  const BASE = 'https://embedcanaisdetv.xyz/e/index.php?canal=';
+  const $ = id => document.getElementById(id);
+  const player = $('player'), canal = $('canal'), preset = $('preset');
+
+  function load(name) {
+    name = (name || '').trim();
+    if (!name) return;
+    canal.value = name;
+    player.src = BASE + encodeURIComponent(name);
+    localStorage.setItem('canal', name);
+    document.title = name + ' - Watch Live';
+  }
+
+  const saved = localStorage.getItem('canal');
+  if (saved) { load(saved); if ([...preset.options].some(o => o.value === saved)) preset.value = saved; else preset.value = ''; }
+
+  preset.onchange = () => { if (preset.value) load(preset.value); else canal.focus(); };
+  $('go').onclick = () => load(canal.value);
+  canal.onkeydown = e => { if (e.key === 'Enter') load(canal.value); };
+  $('reload').onclick = () => { player.src = player.src; };
+  $('fs').onclick = () => {
+    const el = document.querySelector('main');
+    (el.requestFullscreen || el.webkitRequestFullscreen).call(el);
+  };
+  $('hide').onclick = () => document.body.classList.add('hide-bar');
+  $('toggle').onclick = () => document.body.classList.remove('hide-bar');
+  document.addEventListener('keydown', e => {
+    if (e.key === 'h' && document.activeElement !== canal) document.body.classList.toggle('hide-bar');
+    if (e.key === 'f' && document.activeElement !== canal) $('fs').click();
+  });
+</script>
+</body>
+</html>
